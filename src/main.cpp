@@ -1,6 +1,6 @@
 /*
 
-  RPM slider (used as a visualization bar only) implemented using LVGL library on an SPI display (172x320
+  RPM slider (used as a visualization bar only) implemented using LVGL 9.1 on an SPI display (172x320
   ST7789 driver) controlled by the TFT_eSPI library and EEZ framework library (EEZ Studio GUI editor).
 
   There are two FreeRTOS tasks. The first one contains all the display and GUI related code. The other task
@@ -17,16 +17,21 @@
 
 const uint8_t display_BKL_pin = 48; // Display backlight pin
 
+#define BUF_NUM 1
+
+TFT_eSPI tft = TFT_eSPI(); // load TFT service
+
 /* Display parameters */
 
-#define TFT_HOR_RES 172
-#define TFT_VER_RES 320
+#define TFT_HOR_RES 320
+#define TFT_VER_RES 172
 #define TFT_ROTATION LV_DISPLAY_ROTATION_90
 
 /* LVGL draws into this buffer, 1/10 screen size usually works well. The size is in bytes*/
 
 #define DRAW_BUF_SIZE (TFT_HOR_RES * TFT_VER_RES / 10 * (LV_COLOR_DEPTH / 8))
-uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+uint32_t draw_buf[DRAW_BUF_SIZE / 2];
+uint32_t draw_buf2[DRAW_BUF_SIZE / 2];
 
 #if LV_USE_LOG != 0
 void my_print(lv_log_level_t level, const char *buf)
@@ -52,6 +57,8 @@ static void guiTask(void *pvParameters);
 static void sliderTask(void *pvParameters);
 // Unused for this project, but still required
 void encoder_read(lv_indev_t *drv, lv_indev_data_t *data);
+// Display flushing
+void IRAM_ATTR my_disp_flush(lv_display_t *display, const lv_area_t *area, uint8_t *px_map);
 
 void setup()
 {
@@ -105,6 +112,9 @@ static void guiTask(void *pvParameters)
 
     // Initialize LVGL library
     lv_init();
+    tft.begin();        /* TFT init */
+    tft.setRotation(3); /* Landscape orientation */
+    tft.initDMA();
 
     /* Set a tick source so that LVGL will know how much time elapsed */
     lv_tick_set_cb(xTaskGetTickCount);
@@ -123,7 +133,7 @@ static void guiTask(void *pvParameters)
     /*Else create a display yourself*/
     disp = lv_display_create(TFT_HOR_RES, TFT_VER_RES);
     lv_display_set_flush_cb(disp, my_disp_flush);
-    lv_display_set_buffers(disp, draw_buf, NULL, sizeof(draw_buf), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, draw_buf, draw_buf2, sizeof(draw_buf), LV_DISPLAY_RENDER_MODE_PARTIAL);
 #endif
 
     /* Initialize the input device driver. Even though none is used, it's required for lv_timer_handler() */
@@ -170,5 +180,22 @@ static void sliderTask(void *pvParameters)
 
 void encoder_read(lv_indev_t *drv, lv_indev_data_t *data)
 {
-  // Unused
+    // Unused
+}
+
+void IRAM_ATTR my_disp_flush(lv_display_t *display, const lv_area_t *area, uint8_t *px_map)
+{
+    uint32_t w = (area->x2 - area->x1 + 1);
+    uint32_t h = (area->y2 - area->y1 + 1);
+
+    uint16_t *buf16 = (uint16_t *)px_map; // It's a 16 bit (RGB565) display
+
+    tft.setAddrWindow(area->x1, area->y1, w, h);
+    tft.startWrite();
+
+    tft.setSwapBytes(true);
+    tft.pushPixelsDMA(buf16, w * h); // Push line to screen
+    tft.endWrite();
+
+    lv_disp_flush_ready(display);
 }
