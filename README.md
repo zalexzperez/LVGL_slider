@@ -1,4 +1,4 @@
-Release v0.1 has the display objected created by the LVGL library using the lv_tft_espi_create() function.
+Release v0.1 has the display created by the LVGL library using the lv_tft_espi_create() function.
 However, quickly changing objects exhibit image flickering / tearing, due to a relatively poor display performance for the task, even with the highest possible SPI frequency set (80MHz) for this hardware (ESP32-S3):
 
 ![flickering_slider](https://github.com/user-attachments/assets/ea5c19c0-1726-4c0b-83c1-bd37fefa88da)
