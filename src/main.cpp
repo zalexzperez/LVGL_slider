@@ -17,8 +17,6 @@
 
 const uint8_t display_BKL_pin = 48; // Display backlight pin
 
-#define BUF_NUM 1
-
 TFT_eSPI tft = TFT_eSPI(); // load TFT service
 
 /* Display parameters */
