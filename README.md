@@ -3,6 +3,11 @@ However, quickly changing objects exhibit image flickering / tearing, due to a r
 
 ![flickering_slider](https://github.com/user-attachments/assets/ea5c19c0-1726-4c0b-83c1-bd37fefa88da)
 
+After using two buffers and DMA:
+![slider_DMA](https://github.com/user-attachments/assets/e57bc454-f36c-455e-b61f-17c1c2337c0c)
+
+
+
 
 In other projects where the TFT_eSPI library is utilized directly, the programmer can use something called Sprites, which are graphics buffers that minimize flicker and tearing effects.
 Such a feature is not present in the LVGL -> TFT_espi integration.
