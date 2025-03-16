@@ -15,13 +15,11 @@ extern "C" {
 // Flow global variables
 
 enum FlowGlobalVariables {
-    FLOW_GLOBAL_VARIABLE_NONE
+    FLOW_GLOBAL_VARIABLE_COOLANT_TEMP_VAL = 0
 };
 
 // Native global variables
 
-extern int32_t get_var_rpm_percent();
-extern void set_var_rpm_percent(int32_t value);
 
 
 #ifdef __cplusplus
